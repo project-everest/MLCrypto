@@ -1,0 +1,78 @@
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number: 1 (0x1)
+        Signature Algorithm: dsaWithSHA1
+        Issuer: C=CC, ST=State, L=Location, O=Organization, CN=dsa.mitls.org/emailAddress=root@mitls.org
+        Validity
+            Not Before: Mar 24 22:50:38 2017 GMT
+            Not After : Jun 10 22:50:38 2025 GMT
+        Subject: C=CC, ST=State, O=Organization, CN=dsa.cert.mitls.org/emailAddress=root@mitls.org
+        Subject Public Key Info:
+            Public Key Algorithm: dsaEncryption
+            DSA Public Key:
+                pub: 
+                    47:5b:e0:6d:b4:01:2f:a5:05:1d:b4:71:09:51:4c:
+                    ff:f8:4b:92:a6:2b:9a:6c:99:94:e8:bc:8b:c3:1a:
+                    19:da:47:f2:21:2d:e0:4e:d8:07:90:27:ba:31:3b:
+                    73:ac:d0:75:c7:95:f9:97:fd:4c:9b:b2:32:c5:76:
+                    c4:b4:e3:f7:76:bb:98:1b:db:9c:a7:8b:bc:9c:7d:
+                    7f:a8:b1:ad:96:af:8f:37:16:4e:76:45:97:b5:af:
+                    13:82:4b:be:d0:02:a8:9e:6f:94:f1:63:d9:81:e7:
+                    8d:ca:a0:3b:5b:59:c3:37:49:36:2c:3d:2d:b9:8b:
+                    d7:9d:ee:1b:99:cd:47:2b
+                P:   
+                    00:f8:2d:b3:4e:3c:52:b7:f5:55:a2:a1:5b:74:e9:
+                    91:f8:74:a7:ce:76:91:04:16:f0:c8:0a:40:c1:4e:
+                    ce:25:62:72:76:8e:af:21:ec:28:4b:17:a4:2f:bc:
+                    ac:14:fa:0c:f8:f4:7a:77:42:be:a9:2f:33:7c:2b:
+                    45:0f:be:f3:4d:48:02:dd:2a:75:48:5c:37:ec:91:
+                    5c:0a:04:45:c6:d6:b7:ce:b9:4e:1b:71:3b:0a:4a:
+                    73:73:0d:15:cf:68:11:87:94:8f:af:fb:fa:f9:84:
+                    01:a1:97:b0:91:0b:ff:40:51:4b:b1:78:38:0e:d0:
+                    3f:96:02:b6:8c:72:9f:a7:67
+                Q:   
+                    00:a6:46:e2:de:e1:f8:90:d2:4f:c2:a5:ac:f3:0f:
+                    59:cb:97:d1:34:35
+                G:   
+                    0c:c1:e7:23:99:cd:47:4e:b8:7e:77:1d:5b:d9:15:
+                    ca:93:11:13:87:a8:57:5c:31:3f:83:43:de:c5:86:
+                    60:a6:8c:57:7a:e0:08:a2:68:be:9a:a8:76:f6:21:
+                    37:0a:89:da:be:ea:ed:a8:a7:47:37:11:5a:7e:fb:
+                    91:05:60:80:b4:48:ca:95:89:dc:2a:95:c9:cb:41:
+                    50:0a:b5:ae:5a:43:ef:19:ca:dc:e5:4f:22:a4:16:
+                    e8:17:38:cf:c0:d9:02:89:76:de:f4:7c:1d:60:ea:
+                    8b:ce:ed:10:63:ad:3a:ab:32:08:9d:68:5b:15:42:
+                    a4:24:08:3e:59:25:50:c6
+        X509v3 extensions:
+            X509v3 Key Usage: 
+                Digital Signature, Non Repudiation, Key Encipherment
+            X509v3 Basic Constraints: 
+                CA:FALSE
+            Netscape Comment: 
+                OpenSSL Generated Certificate
+    Signature Algorithm: dsaWithSHA1
+        30:2c:02:14:20:6d:23:dc:7b:af:3f:aa:00:b3:1c:28:ed:97:
+        74:d8:7e:f6:3f:92:02:14:56:8e:52:60:da:8e:65:e8:5e:7e:
+        9e:12:e2:e5:25:a9:b3:1b:f2:37
+-----BEGIN CERTIFICATE-----
+MIIDaTCCAymgAwIBAgIBATAJBgcqhkjOOAQDMH4xCzAJBgNVBAYTAkNDMQ4wDAYD
+VQQIDAVTdGF0ZTERMA8GA1UEBwwITG9jYXRpb24xFTATBgNVBAoMDE9yZ2FuaXph
+dGlvbjEWMBQGA1UEAwwNZHNhLm1pdGxzLm9yZzEdMBsGCSqGSIb3DQEJARYOcm9v
+dEBtaXRscy5vcmcwHhcNMTcwMzI0MjI1MDM4WhcNMjUwNjEwMjI1MDM4WjBwMQsw
+CQYDVQQGEwJDQzEOMAwGA1UECAwFU3RhdGUxFTATBgNVBAoMDE9yZ2FuaXphdGlv
+bjEbMBkGA1UEAwwSZHNhLmNlcnQubWl0bHMub3JnMR0wGwYJKoZIhvcNAQkBFg5y
+b290QG1pdGxzLm9yZzCCAbYwggErBgcqhkjOOAQBMIIBHgKBgQD4LbNOPFK39VWi
+oVt06ZH4dKfOdpEEFvDICkDBTs4lYnJ2jq8h7ChLF6QvvKwU+gz49Hp3Qr6pLzN8
+K0UPvvNNSALdKnVIXDfskVwKBEXG1rfOuU4bcTsKSnNzDRXPaBGHlI+v+/r5hAGh
+l7CRC/9AUUuxeDgO0D+WAraMcp+nZwIVAKZG4t7h+JDST8KlrPMPWcuX0TQ1AoGA
+DMHnI5nNR064fncdW9kVypMRE4eoV1wxP4ND3sWGYKaMV3rgCKJovpqodvYhNwqJ
+2r7q7ainRzcRWn77kQVggLRIypWJ3CqVyctBUAq1rlpD7xnK3OVPIqQW6Bc4z8DZ
+Aol23vR8HWDqi87tEGOtOqsyCJ1oWxVCpCQIPlklUMYDgYQAAoGAR1vgbbQBL6UF
+HbRxCVFM//hLkqYrmmyZlOi8i8MaGdpH8iEt4E7YB5AnujE7c6zQdceV+Zf9TJuy
+MsV2xLTj93a7mBvbnKeLvJx9f6ixrZavjzcWTnZFl7WvE4JLvtACqJ5vlPFj2YHn
+jcqgO1tZwzdJNiw9LbmL153uG5nNRyujSDBGMAsGA1UdDwQEAwIF4DAJBgNVHRME
+AjAAMCwGCWCGSAGG+EIBDQQfFh1PcGVuU1NMIEdlbmVyYXRlZCBDZXJ0aWZpY2F0
+ZTAJBgcqhkjOOAQDAy8AMCwCFCBtI9x7rz+qALMcKO2XdNh+9j+SAhRWjlJg2o5l
+6F5+nhLi5SWpsxvyNw==
+-----END CERTIFICATE-----
