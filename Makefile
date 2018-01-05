@@ -1,8 +1,5 @@
-FSTAR_HOME = ../../..
-CONTRIB=ucontrib
-PLATFORM = $(FSTAR_HOME)/$(CONTRIB)/Platform/ml
 DB=db
-INCLUDE=-package batteries,zarith -I $(PLATFORM) -I $(DB)
+INCLUDE=-package batteries,zarith -I $(DB)
 MARCH?=x86_64
 
 OCAMLC = ocamlfind c $(INCLUDE) -g -annot
@@ -63,9 +60,6 @@ openssl_stub.o: libcrypto.a openssl_stub.c
 %.cmx: %.ml
 	$(OCAMLOPT) -c $<
 
-$(PLATFORM)/platform.cmx: $(PLATFORM)/platform.ml
-	$(MAKE) -C $(PLATFORM)
-
 $(DB)/DB.cmx: $(DB)/DB.ml
 	$(MAKE) -C $(DB)
 
@@ -79,7 +73,7 @@ openssl/libcrypto.a: openssl/Configure
 libcrypto.a: openssl/libcrypto.a
 	cp openssl/libcrypto.a .
 
-DLL_OBJ = $(PLATFORM)/platform.cmx CoreCrypto.cmx openssl_stub.o # $(DB)/DB.cmx DHDB.cmx
+DLL_OBJ = CoreCrypto.cmx openssl_stub.o # $(DB)/DB.cmx DHDB.cmx
 CoreCrypto.cmxa: $(DLL_OBJ)
 	$(OCAMLMKLIB) $(EXTRA_LIBS) $(CCLIBS) -o CoreCrypto $(DLL_OBJ)
 
@@ -89,7 +83,7 @@ CoreCrypto.cma: $(DLL_BYTE)
 
 TEST_CMX = Tests.cmx
 Tests.exe: CoreCrypto.cmxa $(TEST_CMX)
-	$(OCAMLOPT) $(EXTRA_OPTS) -I $(PLATFORM) -package batteries,zarith -linkpkg -o $@ \
+	$(OCAMLOPT) $(EXTRA_OPTS) -linkpkg -o $@ \
 	CoreCrypto.cmxa $(TEST_CMX)
 
 test: Tests.exe
@@ -100,7 +94,7 @@ clean:
 	$(MAKE) -C $(PLATFORM) clean
 	rm -f Tests.exe *.[oa] *.so *.cm[ixoa] *.cmxa *.exe *.dll *.annot *~
 
-depend:
+.depend:
 	$(OCAMLDEP) -I $(PLATFORM) -I $(DB) *.ml *.mli > .depend
 
 include .depend

@@ -1,6 +1,11 @@
-type bytes = Platform.Bytes.bytes
-val string_of_bytes : bytes -> string
-val bytes_of_string : string -> bytes
+type byte = int
+type bytes = string
+val hex_of_bytes: bytes -> string
+val bytes_of_hex: string -> bytes
+val length_of_bytes: bytes -> Z.t
+val split_bytes: bytes -> Z.t -> bytes * bytes
+val abyte: byte -> bytes
+val index: bytes -> Z.t -> byte
 
 type hash_alg = MD5 | SHA1 | SHA224 | SHA256 | SHA384 | SHA512
 type sig_alg = RSASIG | DSA | ECDSA | RSAPSS

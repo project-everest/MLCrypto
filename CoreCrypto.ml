@@ -1,15 +1,68 @@
-module Option = Platform.Option
+module Option = BatOption
+type bytes = string
+type byte = int
 
-(** Bytes, as modeled on the F* side, are a record with various fields in it
- * (see [Platform]). *)
-type bytes = Platform.Bytes.bytes
+(*********************************************************************************)
+(* Some helpers to deal with the conversation from hex literals to bytes and
+ * conversely. Mostly for tests. *)
+
+let digit_to_int c = match c with
+  | '0'..'9' -> Char.code c - Char.code '0'
+  | 'a'..'f' -> 10 + Char.code c - Char.code 'a'
+  | _ -> failwith "hex_to_char: invalid hex digit"
+
+let hex_to_char a b =
+  Char.chr ((digit_to_int a) lsl 4 + digit_to_int b)
+
+let char_to_hex c =
+  let n = Char.code c in
+  let digits = "0123456789abcdef" in
+  digits.[n lsr 4], digits.[n land 0x0f]
+
+let string_of_hex s =
+  let n = String.length s in
+  if n mod 2 <> 0 then
+     failwith "string_of_hex: invalid length"
+  else
+    let res = Bytes.create (n/2) in
+    let rec aux i =
+      if i >= n then ()
+      else (
+        Bytes.set res (i/2) (hex_to_char s.[i] s.[i+1]);
+        aux (i+2)
+      )
+    in
+    aux 0;
+    res
+let bytes_of_hex s = string_of_hex s
+
+let hex_of_string s =
+  let n = String.length s in
+  let buf = Buffer.create n in
+  for i = 0 to n - 1 do
+    let d1,d2 = char_to_hex s.[i] in
+    Buffer.add_char buf d1;
+    Buffer.add_char buf d2;
+  done;
+  Buffer.contents buf
+let hex_of_bytes b = hex_of_string b
+
+let index (b:bytes) i : byte =
+  try int_of_char (String.get b (Z.to_int i))
+  with _ -> failwith "index: called out of bound"
+let abyte (ba:byte) = String.make 1 (char_of_int ba)
+
+(*********************************************************************************)
 
 (** C bindings, however, will want most of the time to have a chunk of memory
  * containing data, that is, actual bytes. For this, we use the type [string],
  * also called [cbytes] in [Platform.Bytes]. *)
-let string_of_bytes b = Platform.Bytes.get_cbytes b
-let bytes_of_string s = Platform.Bytes.abytes s
-let (@|) = Platform.Bytes.(@|)
+let (@|) s1 s2 = s1 ^ s2
+let length_of_bytes b = Z.of_int (String.length b)
+let split_bytes (b:bytes) (k:Z.t) =
+    let k = Z.to_int k in
+    String.sub b 0 k,
+    String.sub b k (String.length b - k)
 
 
 (* ----------------- Hashing and HMAC --------------------------------------- *)
@@ -69,10 +122,10 @@ let md_of_hash_alg h = match h with
 let hash (h:hash_alg) (b:bytes) =
   let md = md_of_hash_alg h in
   let ctx = ocaml_EVP_MD_CTX_new(md) in
-  ocaml_EVP_MD_CTX_update ctx (string_of_bytes b);
+  ocaml_EVP_MD_CTX_update ctx b;
   let h = ocaml_EVP_MD_CTX_final(ctx) in
   ocaml_EVP_MD_CTX_fini(ctx);
-  bytes_of_string h
+  h
 
 (* digest functions *)
 type hash_ctx = md_ctx (* exported name *)
@@ -83,12 +136,12 @@ let digest_create (h:hash_alg) : hash_ctx =
   ctx
 
 let digest_update (ctx:md_ctx) (b:bytes) : unit =
-  ocaml_EVP_MD_CTX_update ctx (string_of_bytes b)
+  ocaml_EVP_MD_CTX_update ctx (b)
 
 let digest_final (ctx:md_ctx) : bytes =
   let s = ocaml_EVP_MD_CTX_final ctx  in
   ocaml_EVP_MD_CTX_fini ctx ;
-  bytes_of_string s
+  s
 
 (* -------------------------------------------------------------------- *)
 
@@ -98,8 +151,8 @@ external ocaml_EVP_HMAC : md -> key:string -> data:string -> string = "ocaml_EVP
 
 let hmac (h:hash_alg) (k:bytes) (d:bytes) =
   let md = md_of_hash_alg h in
-  let h = ocaml_EVP_HMAC md (string_of_bytes k) (string_of_bytes d) in
-  bytes_of_string h
+  let h = ocaml_EVP_HMAC md (k) (d) in
+  h
 
 (* ------end of Hashing------------------------------------------ *)
 
@@ -202,70 +255,70 @@ let cipher_of_aead_cipher (c:aead_cipher) = match c with
   | _ -> failwith "not linked to openSSL yet"
 
 let block_encrypt (c:block_cipher) (k:bytes) (iv:bytes) (d:bytes) =
-  assert (Platform.Bytes.length iv = blockSize c);
+  assert (length_of_bytes iv = blockSize c);
   let c = cipher_of_block_cipher c in
   let ctx = ocaml_EVP_CIPHER_CTX_create c true in
-  ocaml_EVP_CIPHER_CTX_set_key ctx (string_of_bytes k);
-  ocaml_EVP_CIPHER_CTX_set_iv ctx (string_of_bytes iv) false;
-  let e = ocaml_EVP_CIPHER_CTX_process ctx (string_of_bytes d) in
+  ocaml_EVP_CIPHER_CTX_set_key ctx (k);
+  ocaml_EVP_CIPHER_CTX_set_iv ctx (iv) false;
+  let e = ocaml_EVP_CIPHER_CTX_process ctx (d) in
   ocaml_EVP_CIPHER_CTX_fini ctx;
-  bytes_of_string e
+  e
 
 let block_decrypt (c:block_cipher) (k:bytes) (iv:bytes) (d:bytes) =
-  assert (Platform.Bytes.length iv = blockSize c);
+  assert (length_of_bytes iv = blockSize c);
   let c = cipher_of_block_cipher c in
   let ctx = ocaml_EVP_CIPHER_CTX_create c false in
-  ocaml_EVP_CIPHER_CTX_set_key ctx (string_of_bytes k);
-  ocaml_EVP_CIPHER_CTX_set_iv ctx (string_of_bytes iv) false;
-  let e = ocaml_EVP_CIPHER_CTX_process ctx (string_of_bytes d) in
+  ocaml_EVP_CIPHER_CTX_set_key ctx (k);
+  ocaml_EVP_CIPHER_CTX_set_iv ctx (iv) false;
+  let e = ocaml_EVP_CIPHER_CTX_process ctx (d) in
   ocaml_EVP_CIPHER_CTX_fini ctx;
-  bytes_of_string e
+  e
 
 let aead_encrypt (c:aead_cipher) (k:bytes) (iv:bytes) (ad:bytes) (d:bytes) =
-  (* Printf.printf " |k|= %d, |iv|=%d\n" (Z.to_int (Platform.Bytes.length k)) (Z.to_int (Platform.Bytes.length iv)); *)
-  assert (Platform.Bytes.length k = aeadKeySize c);
-  (*assert (Platform.Bytes.length iv = aeadRealIVSize c);*)
+  (* Printf.printf " |k|= %d, |iv|=%d\n" (Z.to_int (length_of_bytes k)) (Z.to_int (length_of_bytes iv)); *)
+  assert (length_of_bytes k = aeadKeySize c);
+  (*assert (length_of_bytes iv = aeadRealIVSize c);*)
   let c = cipher_of_aead_cipher c in
   let ctx = ocaml_EVP_CIPHER_CTX_create c true in
-  ocaml_EVP_CIPHER_CTX_set_key ctx (string_of_bytes k);
-  ocaml_EVP_CIPHER_CTX_set_iv ctx (string_of_bytes iv) true;
-  ocaml_EVP_CIPHER_CTX_set_additional_data ctx (string_of_bytes ad);
-  let e = ocaml_EVP_CIPHER_CTX_process ctx (string_of_bytes d) in
+  ocaml_EVP_CIPHER_CTX_set_key ctx (k);
+  ocaml_EVP_CIPHER_CTX_set_iv ctx (iv) true;
+  ocaml_EVP_CIPHER_CTX_set_additional_data ctx (ad);
+  let e = ocaml_EVP_CIPHER_CTX_process ctx (d) in
   let t = ocaml_EVP_CIPHER_CTX_get_tag ctx in
   ocaml_EVP_CIPHER_CTX_fini ctx;
-  Platform.Bytes.op_At_Bar (bytes_of_string e) (bytes_of_string t)
+  (e) @| (t)
 
 let aead_decrypt (alg:aead_cipher) (k:bytes) (iv:bytes) (ad:bytes) (d:bytes) =
-  assert (Platform.Bytes.length k = aeadKeySize alg);
-  (*assert (Platform.Bytes.length iv = aeadRealIVSize alg);*)
+  assert (length_of_bytes k = aeadKeySize alg);
+  (*assert (length_of_bytes iv = aeadRealIVSize alg);*)
   let c = cipher_of_aead_cipher alg in
   let ctx = ocaml_EVP_CIPHER_CTX_create c false in
-  let d,t = Platform.Bytes.split d (Z.sub (Platform.Bytes.length d) (aeadTagSize alg)) in
-  ocaml_EVP_CIPHER_CTX_set_key ctx (string_of_bytes k);
-  ocaml_EVP_CIPHER_CTX_set_iv ctx (string_of_bytes iv) true;
-  ocaml_EVP_CIPHER_CTX_set_additional_data ctx (string_of_bytes ad);
-  let e = ocaml_EVP_CIPHER_CTX_process ctx (string_of_bytes d) in
-  if not (ocaml_EVP_CIPHER_CTX_set_tag ctx (string_of_bytes t)) then
+  let d,t = split_bytes d (Z.sub (length_of_bytes d) (aeadTagSize alg)) in
+  ocaml_EVP_CIPHER_CTX_set_key ctx (k);
+  ocaml_EVP_CIPHER_CTX_set_iv ctx (iv) true;
+  ocaml_EVP_CIPHER_CTX_set_additional_data ctx (ad);
+  let e = ocaml_EVP_CIPHER_CTX_process ctx (d) in
+  if not (ocaml_EVP_CIPHER_CTX_set_tag ctx (t)) then
     None
   else
     let _ = ocaml_EVP_CIPHER_CTX_fini ctx in
-    Some (bytes_of_string e)
+    Some (e)
 
 let stream_encryptor (c:stream_cipher) (k:bytes) =
   let c = cipher_of_stream_cipher c in
   let ctx = ocaml_EVP_CIPHER_CTX_create c true in
-  ocaml_EVP_CIPHER_CTX_set_key ctx (string_of_bytes k);
+  ocaml_EVP_CIPHER_CTX_set_key ctx (k);
   ctx
 
 let stream_decryptor (c:stream_cipher) (k:bytes) =
   let c = cipher_of_stream_cipher c in
   let ctx = ocaml_EVP_CIPHER_CTX_create c false in
-  ocaml_EVP_CIPHER_CTX_set_key ctx (string_of_bytes k);
+  ocaml_EVP_CIPHER_CTX_set_key ctx (k);
   ctx
 
 let stream_process (ctx:cipher_ctx) (d:bytes) =
-  let e = ocaml_EVP_CIPHER_CTX_process ctx (string_of_bytes d) in
-  bytes_of_string e
+  let e = ocaml_EVP_CIPHER_CTX_process ctx (d) in
+  e
 
 let stream_fini (ctx:cipher_ctx) =
   ocaml_EVP_CIPHER_CTX_fini ctx
@@ -278,7 +331,7 @@ let random i =
     let i = Z.to_int i in
     if (i < 0) then invalid_arg "input to random must be non-negative"
     else if (not (ocaml_rand_status())) then failwith "random number generator not ready"
-    else bytes_of_string (ocaml_rand_bytes i)
+    else (ocaml_rand_bytes i)
 
 (* -------------------------------------------------------------------- *)
 type rsa
@@ -305,46 +358,46 @@ external ocaml_rsa_verify : rsa -> pss:bool -> hash_alg option -> data:string ->
 let rsa_gen_key i =
   let i = Z.to_int i in
   let rsa_mod, rsa_pub_exp, rsa_prv_exp = ocaml_rsa_gen_key i 65537 in {
-    rsa_mod = bytes_of_string rsa_mod;
-    rsa_pub_exp = bytes_of_string rsa_pub_exp;
-    rsa_prv_exp = Some (bytes_of_string rsa_prv_exp)
+    rsa_mod = rsa_mod;
+    rsa_pub_exp = rsa_pub_exp;
+    rsa_prv_exp = Some (rsa_prv_exp)
   }
 
 let rsa_key_of_rsa (rsa:rsa) : rsa_key =
   let n, e, d = ocaml_rsa_get_key rsa in
   {
-    rsa_mod     = bytes_of_string n;
-    rsa_pub_exp = bytes_of_string e;
-    rsa_prv_exp = Option.map bytes_of_string d;
+    rsa_mod     = n;
+    rsa_pub_exp = e;
+    rsa_prv_exp = d;
   }
 
 let rsa_encrypt (pk:rsa_key) (p:rsa_padding) (d:bytes) =
   let r = ocaml_rsa_new() in
   ocaml_rsa_set_key r pk;
-  let e = ocaml_rsa_encrypt r false p (string_of_bytes d) in
+  let e = ocaml_rsa_encrypt r false p (d) in
   ocaml_rsa_fini r;
-  bytes_of_string e
+  e
 
 let rsa_decrypt (sk:rsa_key) (p:rsa_padding) (e:bytes) =
   let r = ocaml_rsa_new() in
   ocaml_rsa_set_key r sk;
-  let d = ocaml_rsa_decrypt r true p (string_of_bytes e) in
+  let d = ocaml_rsa_decrypt r true p (e) in
   ocaml_rsa_fini r;
-  Some (bytes_of_string d)
+  Some (d)
 
 (* ADL: the hashing is now internal (because the PSS API uses DigestSign/DigestVerify).
    It is still possible to set hash_alg to None to sign the raw digest (e.g. MD5SHA1) *)
 let rsa_sign (h:hash_alg option) (sk:rsa_key) (pss:bool) (tbs:bytes) =
   let r = ocaml_rsa_new() in
   ocaml_rsa_set_key r sk;
-  let s = ocaml_rsa_sign r pss h (string_of_bytes tbs) in
+  let s = ocaml_rsa_sign r pss h (tbs) in
   ocaml_rsa_fini r;
-  bytes_of_string s
+  s
 
 let rsa_verify (h:hash_alg option) (sk:rsa_key) (pss:bool) (tbs:bytes) (sigv:bytes) =
   let rsa = ocaml_rsa_new() in
   ocaml_rsa_set_key rsa sk;
-  let ret = ocaml_rsa_verify rsa pss h (string_of_bytes tbs) (string_of_bytes sigv) in
+  let ret = ocaml_rsa_verify rsa pss h (tbs) (sigv) in
   ocaml_rsa_fini rsa;
   ret
 
@@ -378,44 +431,44 @@ external ocaml_dsa_verify : dsa -> data:string -> sig_:string -> bool = "ocaml_d
 let dsa_key_of_dsa (dsa:dsa) =
   let p, q, g, pk, sk = ocaml_dsa_get_key dsa in
   let dp = {
-    dsa_p = bytes_of_string p;
-    dsa_q = bytes_of_string q;
-    dsa_g = bytes_of_string g
+    dsa_p = p;
+    dsa_q = q;
+    dsa_g = g
   } in
   {
     dsa_params = dp;
-    dsa_public = bytes_of_string pk;
-    dsa_private = Option.map bytes_of_string sk;
+    dsa_public = pk;
+    dsa_private = sk;
   }
 
 let dsa_gen_key n =
   let n = Z.to_int n in
   let p, q, g = ocaml_dsa_gen_params n in
   let dp = {
-    dsa_p = bytes_of_string p;
-    dsa_q = bytes_of_string q;
-    dsa_g = bytes_of_string g
+    dsa_p = p;
+    dsa_q = q;
+    dsa_g = g
   } in
   let dsa_public, dsa_private = ocaml_dsa_gen_key dp in
   {
     dsa_params = dp;
-    dsa_public = bytes_of_string dsa_public;
-    dsa_private = Some (bytes_of_string dsa_private)
+    dsa_public = dsa_public;
+    dsa_private = Some (dsa_private)
   }
 
 let dsa_sign (h:hash_alg option) (k:dsa_key) (t:bytes) =
   let dsa = ocaml_dsa_new() in
   ocaml_dsa_set_key dsa k;
   let t = match h with None -> t | Some a -> hash a t in
-  let s = ocaml_dsa_sign dsa (string_of_bytes t) in
+  let s = ocaml_dsa_sign dsa (t) in
   ocaml_dsa_fini dsa;
-  bytes_of_string s
+  s
 
 let dsa_verify (h:hash_alg option) (k:dsa_key) (t:bytes) (s:bytes) =
   let dsa = ocaml_dsa_new() in
   ocaml_dsa_set_key dsa k;
   let t = match h with None -> t | Some a -> hash a t in
-  let b = ocaml_dsa_verify dsa (string_of_bytes t) (string_of_bytes s) in
+  let b = ocaml_dsa_verify dsa (t) (s) in
   ocaml_dsa_fini dsa;
   b
 
@@ -450,8 +503,8 @@ let dh_gen_params size =
   let size = Z.to_int size in
   let p, g = ocaml_dh_gen_params size 2 in
   {
-    dh_p = bytes_of_string p;
-    dh_g = bytes_of_string g;
+    dh_p = p;
+    dh_g = g;
     dh_q = None;
     safe_prime = true
   }
@@ -460,16 +513,16 @@ let dh_gen_key (dh:dh_params)=
   let pub, priv = ocaml_dh_gen_key dh in
   {
     dh_params = dh;
-    dh_public = bytes_of_string pub;
-    dh_private = Some (bytes_of_string priv)
+    dh_public = pub;
+    dh_private = Some (priv)
   }
 
 let dh_agreement (mypriv:dh_key) (opub:bytes) =
   let dh = ocaml_dh_new() in
   ocaml_dh_set_key dh mypriv;
-  let a = ocaml_dh_compute dh (string_of_bytes opub) in
+  let a = ocaml_dh_compute dh (opub) in
   ocaml_dh_fini dh;
-  bytes_of_string a
+  a
 
 (* -------------------------------------------------------------------- *)
 
@@ -551,7 +604,7 @@ external ocaml_ec_point_is_on_curve: ssl_ec_group -> ssl_ec_point -> bool =
 let ssl_point_of_point params { ecx; ecy } =
   let g = ssl_group_of_params params in
   let p = ocaml_ec_point_new g in
-  ocaml_ec_point_set_affine_coordinates_GFp g p (string_of_bytes ecx) (string_of_bytes ecy);
+  ocaml_ec_point_set_affine_coordinates_GFp g p (ecx) (ecy);
   p
 
 let ec_is_on_curve params point =
@@ -590,14 +643,14 @@ let ssl_key_of_key key =
   let ssl_key = ec_key_new key.ec_params.curve in
   ocaml_ec_key_set_public_key ssl_key (ssl_point_of_point key.ec_params key.ec_point);
   if key.ec_priv <> None then
-    ocaml_ec_key_set_private_key ssl_key (string_of_bytes (Option.must key.ec_priv));
+    ocaml_ec_key_set_private_key ssl_key ((Option.get key.ec_priv));
   ssl_key
 
 let ec_build_key (params:ec_params) (eck:ssl_ec_key): ec_key =
   let n = ec_bytelen params.curve |> Z.to_int in
   let ecpad s =
     let pad = String.make (n - (String.length s)) '\x00' in
-    bytes_of_string (pad ^ s) in
+    (pad ^ s) in
   let g = ssl_group_of_params params in
   let pub_point = ocaml_ec_key_get0_public_key eck in
   let ecx, ecy = ocaml_ec_point_get_affine_coordinates_GFp g pub_point in
@@ -605,7 +658,7 @@ let ec_build_key (params:ec_params) (eck:ssl_ec_key): ec_key =
   {
     ec_params = params;
     ec_point = { ecx = ecpad ecx; ecy = ecpad ecy };
-    ec_priv = Option.map bytes_of_string priv
+    ec_priv = priv
   }
 
 let ec_key_of_ssl_ec_key eck: ec_key =
@@ -629,7 +682,7 @@ let ecdh_agreement (key: ec_key) (point: ec_point) =
   let ssl_key = ssl_key_of_key key in
   let ssl_point = ssl_point_of_point key.ec_params point in
   let ssl_group = ssl_group_of_params key.ec_params in
-  bytes_of_string (ocaml_ecdh_agreement ssl_key ssl_group ssl_point)
+  (ocaml_ecdh_agreement ssl_key ssl_group ssl_point)
 
 let ecdsa_sign hash_alg key input =
   let input = match hash_alg with
@@ -637,8 +690,8 @@ let ecdsa_sign hash_alg key input =
     | None -> input
   in
   let key = ssl_key_of_key key in
-  let output = ocaml_ecdsa_sign key (string_of_bytes input) in
-  bytes_of_string output
+  let output = ocaml_ecdsa_sign key (input) in
+  output
 
 let ecdsa_verify hash_alg key input signature =
   let input = match hash_alg with
@@ -646,7 +699,7 @@ let ecdsa_verify hash_alg key input signature =
     | None -> input
   in
   let key = ssl_key_of_key key in
-  ocaml_ecdsa_verify key (string_of_bytes input) (string_of_bytes signature)
+  ocaml_ecdsa_verify key (input) (signature)
 
 
 (* -------------------------------------------------------------------------- *)
@@ -667,11 +720,10 @@ external ocaml_load_chain: string -> (string list) option = "ocaml_load_chain"
 external ocaml_load_key: string -> certkey option = "ocaml_load_key"
 
 let validate_chain cert_list for_signing hostname cafile =
-  let csl = List.map string_of_bytes cert_list in
-  ocaml_validate_chain csl for_signing hostname cafile
+  ocaml_validate_chain cert_list for_signing hostname cafile
 
 let get_key_from_cert cert: key option =
-  match ocaml_get_key_from_cert (string_of_bytes cert) with
+  match ocaml_get_key_from_cert (cert) with
   | Some (CertRSA rsa)   -> Some (KeyRSA   (rsa_key_of_rsa rsa))
   | Some (CertDSA dsa)   -> Some (KeyDSA   (dsa_key_of_dsa dsa))
   | Some (CertECDSA eck) -> Some (KeyECDSA (ec_key_of_ssl_ec_key eck))
@@ -691,7 +743,7 @@ let verify_signature key h tbs sigv =
 
 let load_chain pemfile =
   match ocaml_load_chain pemfile with
-  | Some chain -> Some (List.rev_map bytes_of_string chain)
+  | Some chain -> Some (List.rev chain)
   | None -> None
 
 let load_key keyfile =

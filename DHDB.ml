@@ -1,8 +1,8 @@
 open CoreCrypto
 
-type bytes = Platform.Bytes.bytes
-let string_of_bytes b = Platform.Bytes.get_cbytes b
-let bytes_of_string s = Platform.Bytes.abytes s
+type bytes = string
+let string_of_bytes b = b
+let bytes_of_string s = s
 
 type key   = bytes * bytes
 type value = bytes * bool
