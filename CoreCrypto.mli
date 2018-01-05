@@ -1,3 +1,4 @@
+open CryptoTypes
 type byte = int
 type bytes = string
 val hex_of_bytes: bytes -> string
@@ -13,21 +14,9 @@ type block_cipher = AES_128_CBC | AES_256_CBC | TDES_EDE_CBC
 type stream_cipher = RC4_128
 type rsa_padding = Pad_none | Pad_PKCS1
 
-type aead_cipher =
-  | AES_128_GCM
-  | AES_256_GCM
-  | CHACHA20_POLY1305
-  | AES_128_CCM
-  | AES_256_CCM
-  | AES_128_CCM_8
-  | AES_256_CCM_8
-
 val string_of_hash_alg: hash_alg -> string
 
 val blockSize : block_cipher -> Z.t
-val aeadKeySize : aead_cipher -> Z.t
-val aeadRealIVSize : aead_cipher -> Z.t
-val aeadTagSize : aead_cipher -> Z.t
 val hashSize: hash_alg -> Z.t
 
 type rsa_key = {

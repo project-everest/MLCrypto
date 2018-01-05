@@ -1,3 +1,4 @@
+open CryptoTypes
 module Option = BatOption
 type bytes = string
 type byte = int
@@ -164,15 +165,6 @@ type block_cipher = AES_128_CBC | AES_256_CBC | TDES_EDE_CBC
 type stream_cipher = RC4_128
 type rsa_padding = Pad_none | Pad_PKCS1
 
-type aead_cipher =
-  | AES_128_GCM
-  | AES_256_GCM
-  | CHACHA20_POLY1305
-  | AES_128_CCM
-  | AES_256_CCM
-  | AES_128_CCM_8
-  | AES_256_CCM_8
-
 let string_of_block_cipher = function
   | AES_128_CBC -> "AES_128_CBC"
   | AES_256_CBC -> "AES_256_CBC"
@@ -182,27 +174,6 @@ let blockSize = function
   | TDES_EDE_CBC -> Z.of_int 8
   | AES_128_CBC  -> Z.of_int 16
   | AES_256_CBC  -> Z.of_int 16
-
-let aeadKeySize = function
-  | AES_128_CCM       -> Z.of_int 16
-  | AES_128_CCM_8     -> Z.of_int 16
-  | AES_128_GCM       -> Z.of_int 16
-  | AES_256_CCM       -> Z.of_int 32
-  | AES_256_CCM_8     -> Z.of_int 32
-  | AES_256_GCM       -> Z.of_int 32
-  | CHACHA20_POLY1305 -> Z.of_int 32
-
-let aeadRealIVSize (a:aead_cipher) = Z.of_int 12
-
-let aeadTagSize = function
-  | AES_128_CCM_8     -> Z.of_int 8
-  | AES_256_CCM_8     -> Z.of_int 8
-  | AES_128_CCM       -> Z.of_int 16
-  | AES_256_CCM       -> Z.of_int 16
-  | AES_128_GCM       -> Z.of_int 16
-  | AES_256_GCM       -> Z.of_int 16
-  | CHACHA20_POLY1305 -> Z.of_int 16
-
 
 (** Stream ciphers and AEAD *)
 
