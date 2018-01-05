@@ -95,7 +95,7 @@ clean:
 	rm -f Tests.exe *.[oa] *.so *.cm[ixoa] *.cmxa *.exe *.dll *.annot *~
 
 .depend:
-	$(OCAMLDEP) -I $(PLATFORM) -I $(DB) *.ml *.mli > .depend
+	$(OCAMLDEP) -I $(DB) *.ml *.mli > .depend
 
 include .depend
 
