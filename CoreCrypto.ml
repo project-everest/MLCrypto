@@ -550,6 +550,7 @@ let ssl_name_of_curve = function
   | ECC_P384 -> "secp384r1"
   | ECC_P521 -> "secp521r1"
   | ECC_X25519 -> "X25519"
+  | ECC_X448 -> "X448"
 
 let ec_group_new curve =
   ocaml_ec_group_new_by_curve_name (ssl_name_of_curve curve)
