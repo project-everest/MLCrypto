@@ -14,6 +14,9 @@
 #include <caml/memory.h>
 #include <caml/mlvalues.h>
 
+
+#ifdef HAVE_OPENSSL
+ 
 #include <openssl/conf.h>
 #include <openssl/err.h>
 #include <openssl/bn.h>
@@ -2269,3 +2272,126 @@ CAMLprim value ocaml_load_key(value pem) {
 
   CAMLreturn(Val_some(mlkey));
 }
+
+#else // ! HAVE_OPENSSL
+
+#define DUMMY1(X) CAMLprim value X(value v1) { \
+  CAMLparam1(v1); \
+  caml_failwith("No OpenSSL support."); \
+  CAMLreturn(Val_unit); \
+}
+
+#define DUMMY2(X) CAMLprim value X(value v1, value v2) { \
+  CAMLparam2(v1, v2); \
+  caml_failwith("No OpenSSL support."); \
+  CAMLreturn(Val_unit); \
+}
+
+#define DUMMY3(X) CAMLprim value X(value v1, value v2, value v3) { \
+  CAMLparam3(v1, v2, v3); \
+  caml_failwith("No OpenSSL support."); \
+  CAMLreturn(Val_unit); \
+}
+
+#define DUMMY4(X) CAMLprim value X(value v1, value v2, value v3, value v4) { \
+  CAMLparam4(v1, v2, v3, v4); \
+  caml_failwith("No OpenSSL support."); \
+  CAMLreturn(Val_unit); \
+}
+
+#define EVP_MD_GEN(X) DUMMY1(ocaml_EVP_MD_##X)
+
+EVP_MD_GEN(md_null);
+EVP_MD_GEN(md5);
+EVP_MD_GEN(sha1);
+EVP_MD_GEN(sha224);
+EVP_MD_GEN(sha256);
+EVP_MD_GEN(sha384);
+EVP_MD_GEN(sha512);
+
+#define EVP_CIPHER_GEN(X) DUMMY1(ocaml_EVP_CIPHER_##X)
+
+EVP_CIPHER_GEN(des_ede3);
+EVP_CIPHER_GEN(des_ede3_cbc);
+EVP_CIPHER_GEN(aes_128_ecb);
+EVP_CIPHER_GEN(aes_128_cbc);
+EVP_CIPHER_GEN(aes_256_ecb);
+EVP_CIPHER_GEN(aes_256_cbc);
+EVP_CIPHER_GEN(aes_128_gcm);
+EVP_CIPHER_GEN(aes_256_gcm);
+EVP_CIPHER_GEN(chacha20_poly1305);
+EVP_CIPHER_GEN(rc4);
+
+#define EC_METHOD_GEN(X) DUMMY1(ocaml_##X##_method)
+
+EC_METHOD_GEN(GFp_simple)
+EC_METHOD_GEN(GFp_mont)
+EC_METHOD_GEN(GFp_nist)
+
+DUMMY1(ocaml_openssl_init)
+DUMMY1(ocaml_EVP_MD_block_size)
+DUMMY1(ocaml_EVP_MD_size)
+DUMMY1(ocaml_EVP_MD_CTX_new)
+DUMMY1(ocaml_EVP_MD_CTX_fini)
+DUMMY2(ocaml_EVP_MD_CTX_update)
+DUMMY1(ocaml_EVP_MD_CTX_final)
+DUMMY2(ocaml_EVP_CIPHER_CTX_create)
+DUMMY1(ocaml_EVP_CIPHER_CTX_fini)
+DUMMY1(ocaml_EVP_CIPHER_CTX_block_size)
+DUMMY1(ocaml_EVP_CIPHER_CTX_key_length)
+DUMMY1(ocaml_EVP_CIPHER_CTX_iv_length)
+DUMMY2(ocaml_EVP_CIPHER_CTX_set_key)
+DUMMY3(ocaml_EVP_CIPHER_CTX_set_iv)
+DUMMY2(ocaml_EVP_CIPHER_CTX_set_tag)
+DUMMY1(ocaml_EVP_CIPHER_CTX_get_tag)
+DUMMY2(ocaml_EVP_CIPHER_CTX_process)
+DUMMY2(ocaml_EVP_CIPHER_CTX_set_additional_data)
+DUMMY3(ocaml_EVP_HMAC)
+DUMMY1(ocaml_rand_bytes)
+DUMMY1(ocaml_rand_status)
+DUMMY1(ocaml_rsa_new)
+DUMMY1(ocaml_rsa_fini)
+DUMMY2(ocaml_rsa_gen_key)
+DUMMY2(ocaml_rsa_set_key)
+DUMMY1(ocaml_rsa_get_key)
+DUMMY4(ocaml_rsa_encrypt)
+DUMMY4(ocaml_rsa_decrypt)
+DUMMY4(ocaml_rsa_sign)
+DUMMY4(ocaml_rsa_verify)
+DUMMY1(ocaml_dsa_new)
+DUMMY1(ocaml_dsa_fini)
+DUMMY1(ocaml_dsa_gen_params)
+DUMMY1(ocaml_dsa_gen_key)
+DUMMY1(ocaml_dsa_get_key)
+DUMMY2(ocaml_dsa_set_key)
+DUMMY2(ocaml_dsa_sign)
+DUMMY3(ocaml_dsa_verify)
+DUMMY1(ocaml_dh_new)
+DUMMY1(ocaml_dh_fini)
+DUMMY2(ocaml_dh_gen_params)
+DUMMY1(ocaml_dh_params_of_string)
+DUMMY1(ocaml_dh_gen_key)
+DUMMY2(ocaml_dh_set_key)
+DUMMY2(ocaml_dh_compute)
+DUMMY1(ocaml_ec_group_new_by_curve_name)
+DUMMY1(ocaml_ec_point_new)
+DUMMY2(ocaml_ec_group_set_point_conversion_form)
+DUMMY4(ocaml_ec_point_set_affine_coordinates_GFp)
+DUMMY2(ocaml_ec_point_get_affine_coordinates_GFp)
+DUMMY2(ocaml_ec_point_is_on_curve)
+DUMMY1(ocaml_ec_key_new_by_curve_name)
+DUMMY1(ocaml_ec_key_generate)
+DUMMY1(ocaml_ec_key_get0_public_key)
+DUMMY1(ocaml_ec_key_get0_private_key)
+DUMMY2(ocaml_ec_key_set_private_key)
+DUMMY2(ocaml_ec_key_set_public_key)
+DUMMY1(ocaml_ec_key_get_curve_name)
+DUMMY3(ocaml_ecdh_agreement)
+DUMMY2(ocaml_ecdsa_sign)
+DUMMY3(ocaml_ecdsa_verify)
+DUMMY4(ocaml_validate_chain)
+DUMMY1(ocaml_get_key_from_cert)
+DUMMY1(ocaml_load_chain)
+DUMMY1(ocaml_load_key)
+
+#endif

@@ -7,8 +7,9 @@ OCAMLOPT = ocamlfind opt $(INCLUDE) -g -annot
 OCAMLMKLIB = ocamlfind mklib $(INCLUDE)
 OCAMLDEP = ocamlfind dep -slash
 
-CCOPTS = $(addprefix -ccopt ,-Wall -std=c11 -D__USE_MINGW_ANSI_STDIO -Lopenssl -Iopenssl/include)
-CCLIBS = $(addprefix -cclib ,-lcrypto)
+CCOPTS = $(addprefix -ccopt ,-Wall -std=c11 -D__USE_MINGW_ANSI_STDIO)
+CCLIBS = 
+
 
 ifeq ($(OS),Windows_NT)
     # On cygwin + cygwinports, DLLs are searched in the PATH, which is not
@@ -48,9 +49,6 @@ endif
 
 all: CoreCrypto.cmxa
 
-openssl_stub.o: libcrypto.a openssl_stub.c
-	$(OCAMLOPT) $(CCOPTS) $(EXTRA_OPTS) -c openssl_stub.c
-
 %.cmi: %.mli
 	$(OCAMLC) -c $<
 
@@ -63,6 +61,14 @@ openssl_stub.o: libcrypto.a openssl_stub.c
 $(DB)/DB.cmx: $(DB)/DB.ml
 	$(MAKE) -C $(DB)
 
+
+ifdef HAVE_OPENSSL
+CCOPTS += $(addprefix -ccopt ,-Lopenssl -Iopenssl/include -DHAVE_OPENSSL)
+CCLIBS += $(addprefix -cclib ,-lcrypto)
+
+openssl_stub.o: libcrypto.a openssl_stub.c
+	$(OCAMLOPT) $(CCOPTS) $(EXTRA_OPTS) -c openssl_stub.c
+
 openssl/Configure:
 	echo "openssl folder is empty, running git submodule update... no recursion"
 	git submodule update --init
@@ -72,6 +78,14 @@ openssl/libcrypto.a: openssl/Configure
 
 libcrypto.a: openssl/libcrypto.a
 	cp openssl/libcrypto.a .
+
+else # !HAVE_OPENSSL
+
+openssl_stub.o: openssl_stub.c
+	$(OCAMLOPT) $(CCOPTS) $(EXTRA_OPTS) $? -o $@
+
+endif # HAVE_OPENSSL
+
 
 DLL_OBJ = CryptoTypes.cmx CoreCrypto.cmx openssl_stub.o # $(DB)/DB.cmx DHDB.cmx
 CoreCrypto.cmxa: $(DLL_OBJ)
@@ -91,7 +105,9 @@ test: Tests.exe
 
 clean:
 	$(MAKE) -C $(DB) clean
+ifdef PLATFORM
 	$(MAKE) -C $(PLATFORM) clean
+endif
 	rm -f Tests.exe *.[oa] *.so *.cm[ixoa] *.cmxa *.exe *.dll *.annot *~
 
 .depend:
