@@ -62,8 +62,16 @@ $(DB)/DB.cmx: $(DB)/DB.ml
 	$(MAKE) -C $(DB)
 
 
-ifdef HAVE_OPENSSL
-CCOPTS += $(addprefix -ccopt ,-Lopenssl -Iopenssl/include -DHAVE_OPENSSL)
+ifdef NO_OPENSSL
+
+CCOPTS += $(addprefix -ccopt ,-DNO_OPENSSL)
+
+openssl_stub.o: openssl_stub.c
+	$(OCAMLOPT) $(CCOPTS) $(EXTRA_OPTS) $? -o $@
+
+else
+
+CCOPTS += $(addprefix -ccopt ,-Lopenssl -Iopenssl/include)
 CCLIBS += $(addprefix -cclib ,-lcrypto)
 
 openssl_stub.o: libcrypto.a openssl_stub.c
@@ -79,12 +87,7 @@ openssl/libcrypto.a: openssl/Configure
 libcrypto.a: openssl/libcrypto.a
 	cp openssl/libcrypto.a .
 
-else # !HAVE_OPENSSL
-
-openssl_stub.o: openssl_stub.c
-	$(OCAMLOPT) $(CCOPTS) $(EXTRA_OPTS) $? -o $@
-
-endif # HAVE_OPENSSL
+endif # NO_OPENSSL
 
 
 DLL_OBJ = CryptoTypes.cmx CoreCrypto.cmx openssl_stub.o # $(DB)/DB.cmx DHDB.cmx

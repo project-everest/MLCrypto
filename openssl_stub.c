@@ -15,7 +15,7 @@
 #include <caml/mlvalues.h>
 
 
-#ifdef HAVE_OPENSSL
+#ifndef NO_OPENSSL
  
 #include <openssl/conf.h>
 #include <openssl/err.h>
@@ -2273,7 +2273,7 @@ CAMLprim value ocaml_load_key(value pem) {
   CAMLreturn(Val_some(mlkey));
 }
 
-#else // ! HAVE_OPENSSL
+#else // NO_OPENSSL
 
 #define DUMMY1(X) CAMLprim value X(value v1) { \
   CAMLparam1(v1); \
