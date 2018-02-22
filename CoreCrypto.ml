@@ -298,6 +298,13 @@ let stream_fini (ctx:cipher_ctx) =
 external ocaml_rand_status : unit -> bool = "ocaml_rand_status"
 external ocaml_rand_bytes  : int -> string = "ocaml_rand_bytes"
 
+let init () = Z.of_int 1
+
+let zero i = 
+    let i = Z.to_int i in
+    if (i < 0) then invalid_arg "input to random must be non-negative"
+    else Bytes.make i '\x00'
+
 let random i =
     let i = Z.to_int i in
     if (i < 0) then invalid_arg "input to random must be non-negative"

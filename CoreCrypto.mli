@@ -65,6 +65,8 @@ val stream_decryptor : stream_cipher -> bytes -> cipher_stream
 val stream_process : cipher_stream -> bytes -> bytes
 val stream_fini : cipher_stream -> unit
 
+val init : unit -> Z.t
+val zero : Z.t -> bytes
 val random : Z.t -> bytes
 
 val rsa_gen_key : Z.t -> rsa_key
