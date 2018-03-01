@@ -1,6 +1,9 @@
 open CryptoTypes
 type byte = int
 type bytes = string
+
+val now: unit -> int
+
 val hex_of_bytes: bytes -> string
 val bytes_of_hex: string -> bytes
 val length_of_bytes: bytes -> Z.t

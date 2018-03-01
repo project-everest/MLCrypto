@@ -3,6 +3,9 @@ module Option = BatOption
 type bytes = string
 type byte = int
 
+let now () =
+  int_of_float (Unix.time())
+
 (*********************************************************************************)
 (* Some helpers to deal with the conversation from hex literals to bytes and
  * conversely. Mostly for tests. *)
