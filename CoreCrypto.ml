@@ -38,7 +38,7 @@ let string_of_hex s =
     in
     aux 0;
     res
-let bytes_of_hex s = string_of_hex s
+let bytes_of_hex s = Bytes.to_string (string_of_hex s)
 
 let hex_of_string s =
   let n = String.length s in
@@ -306,7 +306,7 @@ let init () = Z.of_int 1
 let zero i = 
     let i = Z.to_int i in
     if (i < 0) then invalid_arg "input to random must be non-negative"
-    else Bytes.make i '\x00'
+    else String.make i '\x00'
 
 let random i =
     let i = Z.to_int i in
