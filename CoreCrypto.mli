@@ -71,6 +71,7 @@ val stream_fini : cipher_stream -> unit
 val init : unit -> Z.t
 val zero : Z.t -> bytes
 val random : Z.t -> bytes
+val random32 : int -> bytes
 
 val rsa_gen_key : Z.t -> rsa_key
 val rsa_encrypt : rsa_key -> rsa_padding -> bytes -> bytes
