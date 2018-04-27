@@ -47,7 +47,7 @@ endif
 
 .PHONY: test dep
 
-all: CoreCrypto.cmxa
+all: CoreCrypto.cmxa CoreCrypto.cma
 
 %.cmi: %.mli
 	$(OCAMLC) -c $<
@@ -96,7 +96,7 @@ CoreCrypto.cmxa: $(DLL_OBJ)
 
 DLL_BYTE = CryptoTypes.cmo CoreCrypto.cmo openssl_stub.o
 CoreCrypto.cma: $(DLL_BYTE)
-	$(OCAMLMKLIB) $(EXTRA_LIBS) -o CoreCrypto $^
+	$(OCAMLMKLIB) $(EXTRA_LIBS) $(CCLIBS) -o CoreCrypto $^
 
 TEST_CMX = Tests.cmx
 Tests.exe: CoreCrypto.cmxa $(TEST_CMX)
