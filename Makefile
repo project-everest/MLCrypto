@@ -94,7 +94,7 @@ DLL_OBJ = CryptoTypes.cmx CoreCrypto.cmx openssl_stub.o
 CoreCrypto.cmxa: $(DLL_OBJ)
 	$(OCAMLMKLIB) $(EXTRA_LIBS) $(CCLIBS) -o CoreCrypto $(DLL_OBJ)
 
-DLL_BYTE = CryptoTypes.cmo CoreCrypto.cmo openssl_stub.o
+DLL_BYTE = CryptoTypes.cmo CoreCrypto.cmo openssl_stub.o openssl/libcrypto.a
 CoreCrypto.cma: $(DLL_BYTE)
 	$(OCAMLMKLIB) $(EXTRA_LIBS) $(CCLIBS) -o CoreCrypto $^
 
