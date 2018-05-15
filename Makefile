@@ -47,7 +47,7 @@ endif
 
 .PHONY: test dep
 
-all: CoreCrypto.cmxa CoreCrypto.cma
+all: CoreCrypto.cmxa # CoreCrypto.cma
 
 %.cmi: %.mli
 	$(OCAMLC) -c $<
