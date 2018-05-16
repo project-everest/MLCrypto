@@ -1,0 +1,12 @@
+.gitignore
+
+.depend
+*.a
+*.annot
+*.cmi
+*.cmo
+*.cmx
+*.cmxa
+*.o
+*.dll
+*~
