@@ -47,7 +47,16 @@ endif
 
 .PHONY: test dep
 
-all: CoreCrypto.cmxa # CoreCrypto.cma
+# JP 20180913: CoreCrypto is gone, in favor of EverCrypt... for the purposes of
+# the Everest build, the only reason why we want to keep this repository is to
+# have a working build of OpenSSL
+# all: # CoreCrypto.cmxa CoreCrypto.cma
+
+ifdef NO_OPENSSL
+all:
+else
+all: openssl/libcrypto.a
+endif
 
 %.cmi: %.mli
 	$(OCAMLC) -c $<
